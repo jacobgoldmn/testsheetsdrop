@@ -45,6 +45,11 @@
   <!-- Include DataTables -->
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
   
+  <!-- 1) Include Moment.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <!-- 2) Include the DataTables datetime-moment plugin -->
+  <script src="https://cdn.datatables.net/plug-ins/1.11.3/sorting/datetime-moment.js"></script>
+  
   <script>
     // Helper function to convert an Excel serial date to a JavaScript Date.
     function excelDateToJSDate(serial) {
@@ -56,6 +61,10 @@
     }
 
     $(document).ready(function() {
+      // 3) Tell DataTables how to interpret your date format
+      // Here we assume Month/Day/Year (e.g. 3/31/2025)
+      $.fn.dataTable.moment('M/D/YYYY');
+
       var xlsxUrl = 'WARN_Scrapes.xlsx';
 
       $.ajax({
@@ -94,10 +103,9 @@
                 (col === "Date Posted" || col === "Notice Dated") &&
                 typeof cellVal === 'number'
               ) {
-                const dateObj = excelDateToJSDate(cellVal);
-                // You can specify formatting options if desired:
-                // e.g., dateObj.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
-                cellVal = dateObj.toLocaleDateString();
+                let dateObj = excelDateToJSDate(cellVal);
+                // Force US-style format for sorting plugin (M/D/YYYY)
+                cellVal = dateObj.toLocaleDateString('en-US');
               }
               
               tableHtml += '<td>' + cellVal + '</td>';
@@ -107,6 +115,8 @@
           tableHtml += '</tbody></table>';
           
           $('#data-container').html(tableHtml);
+
+          // 4) Initialize DataTables — it will recognize our date format thanks to the plugin
           $('#xlsxTable').DataTable();
         },
         error: function(err) {

@@ -46,7 +46,7 @@
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
   
   <script>
-    // Helper function to convert an Excel serial date to a JavaScript date.
+    // Helper function to convert an Excel serial date to a JavaScript Date.
     function excelDateToJSDate(serial) {
       // Excel's epoch (for Windows) is 25569 days after 1899-12-30.
       var utc_days  = Math.floor(serial - 25569);
@@ -56,10 +56,8 @@
     }
 
     $(document).ready(function() {
-      // Reference the XLSX file (it should be in the same directory as index.html)
       var xlsxUrl = 'WARN_Scrapes.xlsx';
 
-      // Fetch the XLSX file using jQuery's AJAX method
       $.ajax({
         url: xlsxUrl,
         method: 'GET',
@@ -67,12 +65,9 @@
           responseType: 'arraybuffer'
         },
         success: function(data) {
-          // Parse the XLSX data using SheetJS
           var workbook = XLSX.read(data, { type: 'array' });
-          // Use the first sheet (adjust if necessary)
           var firstSheetName = workbook.SheetNames[0];
           var worksheet = workbook.Sheets[firstSheetName];
-          // Convert the sheet to JSON; header: 1 returns an array-of-arrays
           var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
           if (jsonData.length === 0) {
@@ -80,35 +75,38 @@
             return;
           }
           
-          // Assume the first row contains headers
           var headers = jsonData[0];
           var rows = jsonData.slice(1);
           
-          // Build an HTML table using the headers and data rows
           var tableHtml = '<table id="xlsxTable" class="display"><thead><tr>';
           headers.forEach(function(header) {
             tableHtml += '<th>' + header + '</th>';
           });
           tableHtml += '</tr></thead><tbody>';
           
-          // Build table rows and check for a "Date Posted" column for conversion
           rows.forEach(function(row) {
             tableHtml += '<tr>';
             headers.forEach(function(col, idx) {
               var cellVal = row[idx] || '';
-              if(col === "Date Posted" && typeof cellVal === 'number'){
-                var dateObj = excelDateToJSDate(cellVal);
+              
+              // Convert Excel serial date for both "Date Posted" and "Notice Dated".
+              if (
+                (col === "Date Posted" || col === "Notice Dated") &&
+                typeof cellVal === 'number'
+              ) {
+                const dateObj = excelDateToJSDate(cellVal);
+                // You can specify formatting options if desired:
+                // e.g., dateObj.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
                 cellVal = dateObj.toLocaleDateString();
               }
+              
               tableHtml += '<td>' + cellVal + '</td>';
             });
             tableHtml += '</tr>';
           });
           tableHtml += '</tbody></table>';
           
-          // Insert the table into the page
           $('#data-container').html(tableHtml);
-          // Initialize DataTables for interactivity
           $('#xlsxTable').DataTable();
         },
         error: function(err) {

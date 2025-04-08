@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Notices Table - Debug</title>
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table.dataTable thead {
+      background-color: #3e6651;
+      color: #ffffff;
+    }
+    table.dataTable th,
+    table.dataTable td {
+      padding: 10px;
+    }
+    table.dataTable tbody tr:nth-child(odd) {
+      background-color: #fafafa;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #ffffff;
+    }
+    table.dataTable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+  </style>
+</head>
+<body>
+  <h1>Notices Table (Debug)</h1>
+  <!-- Container where the table will be rendered -->
+  <div id="data-container">Loading data...</div>
+
+  <!-- Include jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <!-- Include Tabletop.js (for loading Google Sheet data) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Tabletop.js/1.5.1/tabletop.min.js"></script>
+  <!-- Include DataTables JS (for interactive features) -->
+  <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      var publicSpreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZfccnF_qAatqFrUrNTqqfgvcz8mtmSGKx555cJm4j9Us9W2YPRvVwBMqo13796jvCIG1JcQ_XDJor/pubhtml';
+
+      Tabletop.init({
+        key: publicSpreadsheetUrl,
+        callback: function(data, tabletop) {
+          console.log('Fetched data:', data);
+          if (data && data.length > 0) {
+            // Automatically use all column names from the first row
+            var columns = Object.keys(data[0]);
+            
+            // Build the HTML table
+            var tableHtml = '<table id="debugTable" class="display"><thead><tr>';
+            columns.forEach(function(col) {
+              tableHtml += '<th>' + col + '</th>';
+            });
+            tableHtml += '</tr></thead><tbody>';
+
+            data.forEach(function(row) {
+              tableHtml += '<tr>';
+              columns.forEach(function(col) {
+                tableHtml += '<td>' + (row[col] || '') + '</td>';
+              });
+              tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+
+            // Insert the table into the page
+            $('#data-container').html(tableHtml);
+
+            // Initialize DataTables
+            $('#debugTable').DataTable();
+          } else {
+            $('#data-container').html('No data found.');
+          }
+        },
+        simpleSheet: true
+      });
+    });
+  </script>
+</body>
+</html>

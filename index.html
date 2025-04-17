@@ -13,7 +13,7 @@
     h1 {
       text-align: center;
       margin-bottom: 20px;
-  color: #ffffff; /* Change this to your desired title color */
+      color: #ffffff;
     }
     table.dataTable thead {
       background-color: #272829;
@@ -33,43 +33,36 @@
       width: 100%;
       border-collapse: collapse;
     }
-.dataTables_filter input {
-  color: #ffffff; /* Replace with your desired font color for inside search text*/
-}
-.dataTables_filter label {
-  color: #ffffff; /* Replace with your desired font color for "search" word*/
-}
-/* Change font color of the "Show X entries" text */
-.dataTables_length label {
-  color: #ffffff;
-}
-/* Change font color and styling of the dropdown */
-.dataTables_length select {
-  color: #ffffff;
-  background-color: #272829; /* Optional: matches your background */
-  border: 1px solid #ffffff; /* Optional: for better contrast */
-}
-/* Update styling for pagination (bottom right controls) */
-.dataTables_paginate {
-  color: #ffffff;
-}
-
-.dataTables_paginate .paginate_button {
-  color: #ffffff !important;
-  background-color: #272829;
-  border: 1px solid #ffffff;
-  border-radius: 2px;
-  margin: 0 2px;
-}
-
-.dataTables_paginate .paginate_button.current {
-  background-color: #007BFF;
-}
-
-.dataTables_paginate .paginate_button:hover {
-  background-color: #ffffff;
-}
-
+    .dataTables_filter input {
+      color: #ffffff;
+    }
+    .dataTables_filter label {
+      color: #ffffff;
+    }
+    .dataTables_length label {
+      color: #ffffff;
+    }
+    .dataTables_length select {
+      color: #ffffff;
+      background-color: #272829;
+      border: 1px solid #ffffff;
+    }
+    .dataTables_paginate {
+      color: #ffffff;
+    }
+    .dataTables_paginate .paginate_button {
+      color: #ffffff !important;
+      background-color: #272829;
+      border: 1px solid #ffffff;
+      border-radius: 2px;
+      margin: 0 2px;
+    }
+    .dataTables_paginate .paginate_button.current {
+      background-color: #007BFF;
+    }
+    .dataTables_paginate .paginate_button:hover {
+      background-color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -83,24 +76,22 @@
   <!-- Include DataTables -->
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
   
-  <!-- 1) Include Moment.js -->
+  <!-- Include Moment.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-  <!-- 2) Include the DataTables datetime-moment plugin -->
+  <!-- Include the DataTables datetime-moment plugin -->
   <script src="https://cdn.datatables.net/plug-ins/1.11.3/sorting/datetime-moment.js"></script>
   
   <script>
-    // Helper function to convert an Excel serial date to a JavaScript Date.
+    // Helper: convert Excel serial to JS Date
     function excelDateToJSDate(serial) {
-      // Excel's epoch (for Windows) is 25569 days after 1899-12-30.
       var utc_days  = Math.floor(serial - 25569);
-      var utc_value = utc_days * 86400; // seconds in a day
+      var utc_value = utc_days * 86400;
       var date_info = new Date(utc_value * 1000);
       return date_info;
     }
 
     $(document).ready(function() {
-      // 3) Tell DataTables how to interpret your date format
-      // Here we assume Month/Day/Year (e.g. 3/31/2025)
+      // Tell DataTables about your date format
       $.fn.dataTable.moment('M/D/YYYY');
 
       var xlsxUrl = 'WARN_Scrapes.xlsx';
@@ -108,54 +99,45 @@
       $.ajax({
         url: xlsxUrl,
         method: 'GET',
-        xhrFields: {
-          responseType: 'arraybuffer'
-        },
+        xhrFields: { responseType: 'arraybuffer' },
         success: function(data) {
           var workbook = XLSX.read(data, { type: 'array' });
-          var firstSheetName = workbook.SheetNames[0];
-          var worksheet = workbook.Sheets[firstSheetName];
-          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          var jsonData  = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          if (jsonData.length === 0) {
+          if (!jsonData.length) {
             $('#data-container').html('No data found in XLSX.');
             return;
           }
           
-          var headers = jsonData[0];
-          var rows = jsonData.slice(1);
-          
-          var tableHtml = '<table id="xlsxTable" class="display"><thead><tr>';
-          headers.forEach(function(header) {
-            tableHtml += '<th>' + header + '</th>';
-          });
-          tableHtml += '</tr></thead><tbody>';
-          
-          rows.forEach(function(row) {
-            tableHtml += '<tr>';
-            headers.forEach(function(col, idx) {
-              var cellVal = row[idx] || '';
-              
-              // Convert Excel serial date for both "Date Posted" and "Notice Dated".
-              if (
-                (col === "Date Posted" || col === "Notice Dated") &&
-                typeof cellVal === 'number'
-              ) {
-                let dateObj = excelDateToJSDate(cellVal);
-                // Force US-style format for sorting plugin (M/D/YYYY)
-                cellVal = dateObj.toLocaleDateString('en-US');
-              }
-              
-              tableHtml += '<td>' + cellVal + '</td>';
-            });
-            tableHtml += '</tr>';
-          });
-          tableHtml += '</tbody></table>';
-          
-          $('#data-container').html(tableHtml);
+          var headers = jsonData[0],
+              rows    = jsonData.slice(1),
+              html    = '<table id="xlsxTable" class="display"><thead><tr>';
 
-          // 4) Initialize DataTables — it will recognize our date format thanks to the plugin
-          $('#xlsxTable').DataTable();
+          // build header row
+          headers.forEach(h => html += `<th>${h}</th>`);
+          html += '</tr></thead><tbody>';
+          
+          // build data rows
+          rows.forEach(r => {
+            html += '<tr>';
+            headers.forEach((col, i) => {
+              var val = r[i] || '';
+              if ((col === "Date Posted" || col === "Notice Dated") && typeof val === 'number') {
+                val = excelDateToJSDate(val).toLocaleDateString('en-US');
+              }
+              html += `<td>${val}</td>`;
+            });
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+          
+          $('#data-container').html(html);
+
+          // Initialize DataTable — sort “Notice Dated” (col 4) descending by default
+          $('#xlsxTable').DataTable({
+            order: [[4, 'desc']]
+          });
         },
         error: function(err) {
           console.error('Error fetching XLSX file:', err);

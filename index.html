@@ -33,23 +33,15 @@
       width: 100%;
       border-collapse: collapse;
     }
-    .dataTables_filter input {
-      color: #ffffff;
-    }
-    .dataTables_filter label {
-      color: #ffffff;
-    }
-    .dataTables_length label {
-      color: #ffffff;
-    }
+    .dataTables_filter input { color: #ffffff; }
+    .dataTables_filter label { color: #ffffff; }
+    .dataTables_length label { color: #ffffff; }
     .dataTables_length select {
       color: #ffffff;
       background-color: #272829;
       border: 1px solid #ffffff;
     }
-    .dataTables_paginate {
-      color: #ffffff;
-    }
+    .dataTables_paginate { color: #ffffff; }
     .dataTables_paginate .paginate_button {
       color: #ffffff !important;
       background-color: #272829;
@@ -69,64 +61,59 @@
   <h1>Notices Table</h1>
   <div id="data-container">Loading data...</div>
 
-  <!-- Include jQuery -->
+  <!-- jQuery, SheetJS, DataTables, Moment & datetime-moment plugin -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <!-- Include SheetJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-  <!-- Include DataTables -->
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-  
-  <!-- Include Moment.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-  <!-- Include the DataTables datetime-moment plugin -->
   <script src="https://cdn.datatables.net/plug-ins/1.11.3/sorting/datetime-moment.js"></script>
   
   <script>
-    // Helper: convert Excel serial to JS Date
+    // Convert Excel serial date to JS Date
     function excelDateToJSDate(serial) {
-      var utc_days  = Math.floor(serial - 25569);
-      var utc_value = utc_days * 86400;
-      var date_info = new Date(utc_value * 1000);
+      var utc_days  = Math.floor(serial - 25569),
+          utc_value = utc_days * 86400,
+          date_info = new Date(utc_value * 1000);
       return date_info;
     }
 
     $(document).ready(function() {
-      // Tell DataTables about your date format
+      // Tell DataTables how to parse M/D/YYYY
       $.fn.dataTable.moment('M/D/YYYY');
 
-      var xlsxUrl = 'WARN_Scrapes.xlsx';
-
       $.ajax({
-        url: xlsxUrl,
+        url: 'WARN_Scrapes.xlsx',
         method: 'GET',
         xhrFields: { responseType: 'arraybuffer' },
         success: function(data) {
-          var workbook = XLSX.read(data, { type: 'array' });
-          var worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          var jsonData  = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          var wb = XLSX.read(data, { type: 'array' });
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
           
           if (!jsonData.length) {
             $('#data-container').html('No data found in XLSX.');
             return;
           }
           
-          var headers = jsonData[0],
-              rows    = jsonData.slice(1),
-              html    = '<table id="xlsxTable" class="display"><thead><tr>';
-
-          // build header row
-          headers.forEach(h => html += `<th>${h}</th>`);
+          var headers = jsonData[0];
+          // slice off header row, then filter out any rows where EVERY cell is empty/null
+          var rows = jsonData.slice(1).filter(function(r) {
+            return r.some(function(cell) { return cell !== null && cell !== ""; });
+          });
+          
+          // build table HTML
+          var html = '<table id="xlsxTable" class="display"><thead><tr>';
+          headers.forEach(function(h) { html += '<th>'+h+'</th>'; });
           html += '</tr></thead><tbody>';
           
-          // build data rows
-          rows.forEach(r => {
+          rows.forEach(function(r) {
             html += '<tr>';
-            headers.forEach((col, i) => {
-              var val = r[i] || '';
-              if ((col === "Date Posted" || col === "Notice Dated") && typeof val === 'number') {
+            headers.forEach(function(col,i) {
+              var val = r[i]||"";
+              if ((col==="Date Posted"||col==="Notice Dated") && typeof val==="number") {
                 val = excelDateToJSDate(val).toLocaleDateString('en-US');
               }
-              html += `<td>${val}</td>`;
+              html += '<td>'+val+'</td>';
             });
             html += '</tr>';
           });
@@ -134,13 +121,13 @@
           
           $('#data-container').html(html);
 
-          // Initialize DataTable — sort “Notice Dated” (col 4) descending by default
+          // initialize DataTable with default sort on Notice Dated (col 4) descending
           $('#xlsxTable').DataTable({
-            order: [[4, 'desc']]
+            order: [[4,'desc']]
           });
         },
         error: function(err) {
-          console.error('Error fetching XLSX file:', err);
+          console.error(err);
           $('#data-container').html('Error loading the XLSX file.');
         }
       });

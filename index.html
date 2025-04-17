@@ -98,8 +98,11 @@
           var headers = jsonData[0];
           // slice off header row, then filter out any rows where EVERY cell is empty/null
           var rows = jsonData.slice(1).filter(function(r) {
-            return r.some(function(cell) { return cell !== null && cell !== ""; });
-          });
+  return headers.some(function(_, i) {
+    var cell = r[i];
+    return cell != null && String(cell).trim() !== "";
+  });
+});
           
           // build table HTML
           var html = '<table id="xlsxTable" class="display"><thead><tr>';

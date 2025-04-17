@@ -3,9 +3,78 @@
 <head>
   <meta charset="utf-8">
   <title> WARN Notices Table</title>
+  <!-- 1) DataTables core CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+  <!-- 2) Your custom overrides MUST come *after* -->
   <style>
-    /* …your existing styles… */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #272829;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+    /* Header row */
+    table.dataTable thead {
+      background-color: #272829 !important;
+      color: #ffffff !important;
+    }
+    /* Cell padding */
+    table.dataTable th,
+    table.dataTable td {
+      padding: 10px;
+    }
+    /* Stripes */
+    table.dataTable tbody tr:nth-child(odd) {
+      background-color: #333 !important;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #2a2a2a !important;
+    }
+    table.dataTable {
+      width: 100%;
+      border-collapse: collapse;
+      color: #fff; /* default text color */
+    }
+    /* Search box text */
+    .dataTables_filter input {
+      color: #ffffff;
+      background: #444;
+      border: 1px solid #555;
+    }
+    /* "Search:" label */
+    .dataTables_filter label {
+      color: #ffffff;
+    }
+    /* Show entries label */
+    .dataTables_length label {
+      color: #ffffff;
+    }
+    /* Entries dropdown */
+    .dataTables_length select {
+      color: #ffffff;
+      background-color: #444;
+      border: 1px solid #555;
+    }
+    /* Pagination buttons */
+    .dataTables_paginate .paginate_button {
+      color: #ffffff !important;
+      background-color: #272829;
+      border: 1px solid #555;
+      border-radius: 2px;
+      margin: 0 2px;
+    }
+    .dataTables_paginate .paginate_button.current {
+      background-color: #007BFF !important;
+      color: #fff !important;
+    }
+    .dataTables_paginate .paginate_button:hover {
+      background-color: #444 !important;
+      color: #fff !important;
+    }
   </style>
 </head>
 <body>
@@ -61,32 +130,32 @@
             headers.forEach(function(col, i) {
               var raw = r[i] || '';
               var display = raw;
-
-              // Format dates
-              if ((col === "Date Posted" || col === "Notice Dated") && typeof raw === 'number') {
+              
+              // dates
+              if ((col==='Date Posted'||col==='Notice Dated') && typeof raw==='number') {
                 display = excelDateToJSDate(raw).toLocaleDateString('en-US');
               }
-
-              // **NEW**: wrap Company Name in hyperlink if XLSX cell has one
-              if (col === "Company Name") {
-                // rowIndex+1 because jsonData[0] is header, so data starts at sheet row 2
-                var cellRef = XLSX.utils.encode_cell({ c: i, r: rowIndex + 1 });
-                var cellObj = sheet[cellRef];
+              
+              // hyperlinks on Company Name
+              if (col==='Company Name') {
+                var addr = XLSX.utils.encode_cell({c:i, r:rowIndex+1});
+                var cellObj = sheet[addr];
                 if (cellObj && cellObj.l && cellObj.l.Target) {
-                  display = '<a href="' + cellObj.l.Target + '" target="_blank">' + display + '</a>';
+                  display = '<a href="'+cellObj.l.Target+'" target="_blank">'+display+'</a>';
                 }
               }
 
-              html += '<td>' + display + '</td>';
+              html += '<td>'+display+'</td>';
             });
             html += '</tr>';
           });
-          
           html += '</tbody></table>';
+          
           $('#data-container').html(html);
 
+          // default sort Notice Dated desc
           $('#xlsxTable').DataTable({
-            order: [[4, 'desc']]
+            order: [[4,'desc']]
           });
         },
         error: function(err) {

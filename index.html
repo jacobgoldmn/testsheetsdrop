@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <title> WARN Notices Table</title>
-  <!-- 1) DataTables core CSS -->
+  <!-- DataTables core CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
-  <!-- 2) Your custom overrides MUST come *after* -->
+  <!-- Custom dark‑theme overrides -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,29 +37,22 @@
     table.dataTable {
       width: 100%;
       border-collapse: collapse;
-      color: #ffffff; /* default text color */
+      color: #ffffff;
     }
-    /* Search box text */
     .dataTables_filter input {
       color: #ffffff;
       background: #444;
       border: 1px solid #555;
     }
-    /* "Search:" label */
-    .dataTables_filter label {
-      color: #ffffff;
-    }
-    /* "Show entries" label */
+    .dataTables_filter label,
     .dataTables_length label {
       color: #ffffff;
     }
-    /* Entries dropdown */
     .dataTables_length select {
       color: #ffffff;
       background-color: #444;
       border: 1px solid #555;
     }
-    /* Pagination buttons */
     .dataTables_paginate .paginate_button {
       color: #ffffff !important;
       background-color: #272829;
@@ -80,6 +73,15 @@
       background-color: inherit !important;
       color: #ffffff !important;
     }
+
+    /* Hyperlink styling: white text with underline */
+    table.dataTable a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+    table.dataTable a:hover {
+      color: #dddddd;
+    }
   </style>
 </head>
 <body>
@@ -94,7 +96,6 @@
   <script src="https://cdn.datatables.net/plug-ins/1.11.3/sorting/datetime-moment.js"></script>
   
   <script>
-    // Convert Excel serial to JS Date
     function excelDateToJSDate(serial) {
       var utc_days  = Math.floor(serial - 25569),
           utc_value = utc_days * 86400,
@@ -103,7 +104,6 @@
     }
 
     $(document).ready(function() {
-      // Tell DataTables how to parse M/D/YYYY
       $.fn.dataTable.moment('M/D/YYYY');
 
       $.ajax({

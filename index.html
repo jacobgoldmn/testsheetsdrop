@@ -37,7 +37,7 @@
     table.dataTable {
       width: 100%;
       border-collapse: collapse;
-      color: #fff; /* default text color */
+      color: #ffffff; /* default text color */
     }
     /* Search box text */
     .dataTables_filter input {
@@ -49,7 +49,7 @@
     .dataTables_filter label {
       color: #ffffff;
     }
-    /* Show entries label */
+    /* "Show entries" label */
     .dataTables_length label {
       color: #ffffff;
     }
@@ -69,11 +69,16 @@
     }
     .dataTables_paginate .paginate_button.current {
       background-color: #007BFF !important;
-      color: #fff !important;
+      color: #ffffff !important;
     }
     .dataTables_paginate .paginate_button:hover {
       background-color: #444 !important;
-      color: #fff !important;
+      color: #ffffff !important;
+    }
+    /* Keep the sorted column visible on dark background */
+    table.dataTable tbody td.sorting_1 {
+      background-color: inherit !important;
+      color: #ffffff !important;
     }
   </style>
 </head>
@@ -89,6 +94,7 @@
   <script src="https://cdn.datatables.net/plug-ins/1.11.3/sorting/datetime-moment.js"></script>
   
   <script>
+    // Convert Excel serial to JS Date
     function excelDateToJSDate(serial) {
       var utc_days  = Math.floor(serial - 25569),
           utc_value = utc_days * 86400,
@@ -97,6 +103,7 @@
     }
 
     $(document).ready(function() {
+      // Tell DataTables how to parse M/D/YYYY
       $.fn.dataTable.moment('M/D/YYYY');
 
       $.ajax({
@@ -104,8 +111,8 @@
         method: 'GET',
         xhrFields: { responseType: 'arraybuffer' },
         success: function(data) {
-          var wb = XLSX.read(data, { type: 'array' });
-          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var wb       = XLSX.read(data, { type: 'array' });
+          var sheet    = wb.Sheets[wb.SheetNames[0]];
           var jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
           
           if (!jsonData.length) {
@@ -114,38 +121,39 @@
           }
           
           var headers = jsonData[0];
-          var rows = jsonData.slice(1).filter(function(r) {
+          var rows    = jsonData.slice(1).filter(function(r) {
             return headers.some(function(_, i) {
               var cell = r[i];
               return cell != null && String(cell).trim() !== "";
             });
           });
           
+          // build table HTML
           var html = '<table id="xlsxTable" class="display"><thead><tr>';
-          headers.forEach(function(h) { html += '<th>'+h+'</th>'; });
+          headers.forEach(function(h) { html += '<th>' + h + '</th>'; });
           html += '</tr></thead><tbody>';
           
           rows.forEach(function(r, rowIndex) {
             html += '<tr>';
             headers.forEach(function(col, i) {
-              var raw = r[i] || '';
-              var display = raw;
-              
-              // dates
-              if ((col==='Date Posted'||col==='Notice Dated') && typeof raw==='number') {
+              var raw     = r[i] || '',
+                  display = raw;
+
+              // format dates
+              if ((col === "Date Posted" || col === "Notice Dated") && typeof raw === 'number') {
                 display = excelDateToJSDate(raw).toLocaleDateString('en-US');
               }
-              
-              // hyperlinks on Company Name
-              if (col==='Company Name') {
-                var addr = XLSX.utils.encode_cell({c:i, r:rowIndex+1});
-                var cellObj = sheet[addr];
+
+              // make company name a link if XLSX cell has a hyperlink
+              if (col === "Company Name") {
+                var addr    = XLSX.utils.encode_cell({c:i, r:rowIndex+1}),
+                    cellObj = sheet[addr];
                 if (cellObj && cellObj.l && cellObj.l.Target) {
-                  display = '<a href="'+cellObj.l.Target+'" target="_blank">'+display+'</a>';
+                  display = '<a href="' + cellObj.l.Target + '" target="_blank">' + display + '</a>';
                 }
               }
 
-              html += '<td>'+display+'</td>';
+              html += '<td>' + display + '</td>';
             });
             html += '</tr>';
           });
@@ -153,9 +161,9 @@
           
           $('#data-container').html(html);
 
-          // default sort Notice Dated desc
+          // initialize DataTable with default sort on Notice Dated (col 4) descending
           $('#xlsxTable').DataTable({
-            order: [[4,'desc']]
+            order: [[4, 'desc']]
           });
         },
         error: function(err) {
